@@ -1,0 +1,219 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #0f0e0b;
+  --ink-2: #17150f;
+  --ink-3: #211d15;
+  --gold: #f5c451;
+  --bone: #f1eadc;
+  /* font stacks — families come from the @fontsource imports in layout.tsx */
+  --font-display: "Space Grotesk Variable", system-ui, sans-serif;
+  --font-body: "Hanken Grotesk Variable", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SFMono-Regular", monospace;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--ink);
+  color: var(--bone);
+  font-family: var(--font-body), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* The warm ambient field behind everything: fine grid + drifting glow + grain */
+.field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-color: var(--ink);
+}
+.field::before {
+  /* hairline grid */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+      to right,
+      rgba(241, 234, 220, 0.035) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgba(241, 234, 220, 0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(
+    ellipse 80% 70% at 50% 30%,
+    black 35%,
+    transparent 85%
+  );
+}
+.field::after {
+  /* warm vignette */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    120% 90% at 50% -10%,
+    rgba(245, 196, 81, 0.07),
+    transparent 55%
+  );
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.045;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Drifting glow blob (atmosphere) */
+.drift {
+  position: fixed;
+  z-index: 0;
+  pointer-events: none;
+  width: 60vw;
+  height: 60vw;
+  max-width: 820px;
+  max-height: 820px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(245, 196, 81, 0.1),
+    transparent 62%
+  );
+  filter: blur(30px);
+  animation: drift 26s ease-in-out infinite alternate;
+}
+@keyframes drift {
+  0% {
+    transform: translate(-12%, -18%) scale(1);
+  }
+  100% {
+    transform: translate(14%, 10%) scale(1.18);
+  }
+}
+
+/* Scan beam used on the scanning screen */
+@keyframes sweep {
+  0% {
+    transform: translateY(-8%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(108%);
+    opacity: 0;
+  }
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+.caret {
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes pulsering {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ink);
+}
+::-webkit-scrollbar-thumb {
+  background: #2c271c;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3424;
+}
+
+::selection {
+  background: rgba(245, 196, 81, 0.28);
+  color: #fff;
+}
+
+/* Eyebrow / mono labels */
+.eyebrow {
+  font-family: var(--font-mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.68rem;
+  color: var(--gold);
+}
+
+/* Panel surface */
+.panel {
+  background: linear-gradient(
+    180deg,
+    rgba(35, 31, 22, 0.55),
+    rgba(23, 21, 15, 0.55)
+  );
+  border: 1px solid rgba(241, 234, 220, 0.08);
+  border-radius: 1.1rem;
+  backdrop-filter: blur(6px);
+}
+
+input,
+textarea {
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+textarea {
+  resize: vertical;
+}
+
+/* Focus ring */
+.focusable:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(245, 196, 81, 0.55),
+    0 0 0 4px rgba(245, 196, 81, 0.12);
+  border-color: rgba(245, 196, 81, 0.55) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
