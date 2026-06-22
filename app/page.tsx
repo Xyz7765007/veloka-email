@@ -246,7 +246,7 @@ function ErrorScreen({
           </Button>
         </div>
         <p className="mt-8 max-w-sm font-mono text-[11px] leading-relaxed text-bone-faint">
-          Your inputs are kept — &ldquo;Try again&rdquo; re-runs the same email,
+          Your inputs are kept. &ldquo;Try again&rdquo; re-runs the same email,
           no re-typing needed.
         </p>
       </div>

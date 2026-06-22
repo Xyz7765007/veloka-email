@@ -79,24 +79,29 @@ export function Scanning({
             className="pointer-events-none absolute inset-x-0 z-20 h-28"
             style={{
               background:
-                "linear-gradient(180deg, transparent, rgba(245,196,81,0.14) 55%, rgba(245,196,81,0.45))",
-              borderBottom: "1.5px solid rgba(245,196,81,0.85)",
+                "linear-gradient(180deg, transparent, rgba(61,123,255,0.14) 55%, rgba(61,123,255,0.45))",
+              borderBottom: "1.5px solid rgba(61,123,255,0.85)",
               animation: "sweep 2.4s ease-in-out infinite",
             }}
           />
           <div className="mb-3 flex items-center justify-between border-b border-bone/10 pb-3 font-mono text-[0.66rem] text-bone-faint">
             <span>{data.company || "specimen"}.eml</span>
-            <span className="text-gold">{pct}%</span>
+            <span className="text-brand">{pct}%</span>
           </div>
-          {data.subject && (
+          {data.emails[0]?.subject && (
             <p className="mb-3 font-mono text-[0.74rem] text-bone">
               <span className="text-bone-faint">subj </span>
-              {data.subject}
+              {data.emails[0].subject}
             </p>
           )}
           <pre className="max-h-[16rem] overflow-hidden whitespace-pre-wrap font-mono text-[0.78rem] leading-relaxed text-bone-dim">
-            {data.body.slice(0, 620)}
+            {(data.emails[0]?.body || "").slice(0, 620)}
           </pre>
+          {data.emails.length > 1 && (
+            <div className="mt-3 font-mono text-[0.66rem] text-bone-faint">
+              + {data.emails.length - 1} more email{data.emails.length - 1 > 1 ? "s" : ""} in this {data.mode === "variations" ? "test" : data.mode === "sequence" ? "sequence" : "batch"}
+            </div>
+          )}
         </div>
 
         {/* status stream */}

@@ -6,7 +6,7 @@ import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Coldscore — by Side Kick",
+  title: "Coldscore by Side Kick",
   description:
     "See your cold email the way your prospect does. Paste an email, get a deep diagnostic scored from your ICP's point of view.",
   icons: {
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f0e0b",
+  themeColor: "#0B0D12",
   width: "device-width",
   initialScale: 1,
 };

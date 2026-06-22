@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import {
   MODEL,
-  SYSTEM_PROMPT,
+  buildSystemPrompt,
   ANALYSIS_SCHEMA,
   buildUserPrompt,
 } from "@/lib/prompt";
@@ -11,7 +11,7 @@ import { saveScan } from "@/lib/airtable";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -32,12 +32,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
 
-  if (!data?.body || data.body.trim().length < 20) {
+  if (
+    !data?.emails ||
+    !Array.isArray(data.emails) ||
+    data.emails.length === 0 ||
+    !data.emails.some((e) => e?.body && e.body.trim().length >= 20)
+  ) {
     return NextResponse.json(
-      { error: "Please paste an email body of at least 20 characters." },
+      { error: "Please add at least one email with a body of 20+ characters." },
       { status: 400 }
     );
   }
+
+  // Normalise: keep at most 3 emails that actually have content.
+  data.emails = data.emails
+    .filter((e) => e && (e.body?.trim() || e.subject?.trim()))
+    .slice(0, 3);
+  if (!data.mode) data.mode = "single";
 
   const openai = new OpenAI({ apiKey });
 
@@ -45,7 +56,7 @@ export async function POST(req: Request) {
     const completion = await openai.chat.completions.create({
       model: MODEL,
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: buildSystemPrompt(data.mode) },
         { role: "user", content: buildUserPrompt(data) },
       ],
       // Structured Outputs: the response is constrained to exactly match the schema.
@@ -110,9 +121,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // Best-effort persistence to Airtable. Never blocks or fails the scan:
-    // saveScan swallows its own errors and no-ops if Airtable isn't configured.
+    // Best-effort persistence to Airtable with the FULL analysis (incl. full
+    // rewrites). Never blocks or fails the scan.
     const persisted = await saveScan(data, analysis as Analysis, MODEL);
+
+    // Gate the rewrite for the client: subjects stay full, the rewritten body
+    // is truncated to a teaser so the full value sits behind a booked call.
+    gateForClient(analysis);
 
     return NextResponse.json({ analysis, saved: persisted.saved });
   } catch (err: unknown) {
@@ -139,5 +154,32 @@ export async function POST(req: Request) {
       { error: msg },
       { status: typeof status === "number" ? status : 502 }
     );
+  }
+}
+
+// --- rewrite gating -------------------------------------------------
+function teaser(body: string): string {
+  const max = Math.min(Math.max(Math.floor(body.length * 0.45), 90), 260);
+  if (body.length <= max) return body;
+  let cut = body.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  if (lastSpace > 60) cut = cut.slice(0, lastSpace);
+  return cut.trimEnd() + "…";
+}
+
+function gateForClient(analysis: unknown): void {
+  if (!analysis || typeof analysis !== "object") return;
+  const emails = (analysis as { emails?: unknown }).emails;
+  if (!Array.isArray(emails)) return;
+  for (const e of emails) {
+    const rw = (e as { rewrite?: Record<string, unknown> })?.rewrite;
+    if (rw && typeof rw.body === "string") {
+      if (rw.body.trim().length > 60) {
+        rw.body = teaser(rw.body);
+        rw.bodyLocked = true;
+      } else {
+        rw.bodyLocked = false;
+      }
+    }
   }
 }

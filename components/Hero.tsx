@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Eye, Crosshair, FileDown } from "lucide-react";
 import { Wordmark } from "./Wordmark";
 import { Button, Eyebrow } from "./ui";
+import { BRAND } from "@/lib/brand";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -58,7 +59,7 @@ export function Hero({ onStart }: { onStart: () => void }) {
                 >
                   <motion.path
                     d="M2 7C40 3 160 3 198 6"
-                    stroke="#f5c451"
+                    stroke="#3D7BFF"
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     initial={{ pathLength: 0 }}
@@ -74,8 +75,9 @@ export function Hero({ onStart }: { onStart: () => void }) {
             <p className="mt-7 max-w-md text-[1.02rem] leading-relaxed text-bone-dim">
               Coldscore drops your email in front of your exact ICP and shows
               you what they see in the first three seconds, where they lose
-              interest, and whether they&apos;d ever reply — then rewrites it
-              sharper.
+              interest, and whether they&apos;d ever reply, then rewrites it
+              sharper. Score a single email, a follow-up sequence, or A/B/C
+              variations.
             </p>
           </Stagger>
           <Stagger delay={0.28}>
@@ -93,7 +95,7 @@ export function Hero({ onStart }: { onStart: () => void }) {
             <div className="mt-10 flex flex-wrap gap-x-7 gap-y-3">
               {[
                 { icon: Eye, label: "ICP point-of-view" },
-                { icon: Crosshair, label: "Multi-angle scoring" },
+                { icon: Crosshair, label: "Sequences & variations" },
                 { icon: FileDown, label: "Downloadable report" },
               ].map(({ icon: Icon, label }) => (
                 <div key={label} className="flex items-center gap-2">
@@ -112,6 +114,21 @@ export function Hero({ onStart }: { onStart: () => void }) {
           <Specimen />
         </Stagger>
       </div>
+
+      {/* footer credit */}
+      <Stagger delay={0.45}>
+        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-bone/10 py-5 font-mono text-[0.66rem] uppercase tracking-[0.16em] text-bone-faint">
+          <span>{BRAND.signoff}</span>
+          <a
+            href={BRAND.bookACall}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="focusable rounded-full text-bone-dim transition-colors hover:text-brand"
+          >
+            Book a demo →
+          </a>
+        </footer>
+      </Stagger>
     </div>
   );
 }
@@ -131,8 +148,8 @@ function Specimen() {
           className="pointer-events-none absolute inset-x-0 z-20 h-24"
           style={{
             background:
-              "linear-gradient(180deg, transparent, rgba(245,196,81,0.16) 60%, rgba(245,196,81,0.5))",
-            borderBottom: "1.5px solid rgba(245,196,81,0.8)",
+              "linear-gradient(180deg, transparent, rgba(61,123,255,0.16) 60%, rgba(61,123,255,0.5))",
+            borderBottom: "1.5px solid rgba(61,123,255,0.8)",
             animation: "sweep 4.2s ease-in-out infinite",
           }}
         />

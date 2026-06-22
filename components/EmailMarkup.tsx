@@ -136,7 +136,7 @@ export function EmailMarkup({
       <div className="space-y-3">
         {numbered.length === 0 && (
           <div className="rounded-xl border border-good/20 bg-good/[0.05] p-4 text-[0.86rem] leading-snug text-bone-dim">
-            No line-level issues were flagged — nothing in the wording tripped a
+            No line-level issues were flagged. Nothing in the wording tripped a
             specific red flag. Check the breakdown and priority fixes below for
             the bigger-picture read.
           </div>

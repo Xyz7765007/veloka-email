@@ -8,29 +8,35 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // warm "ink" base — deliberately warm, not a cold near-black
+        // cool, clean B2B dark base
         ink: {
-          DEFAULT: "#0F0E0B",
-          2: "#17150F",
-          3: "#211D15",
-          4: "#2C271C",
+          DEFAULT: "#0B0D12",
+          2: "#11141B",
+          3: "#1A1E27",
+          4: "#242A36",
         },
         bone: {
-          DEFAULT: "#F1EADC",
-          dim: "#A89E8B",
-          faint: "#6C6353",
+          DEFAULT: "#EDF1F7",
+          dim: "#99A2B2",
+          faint: "#5C6675",
         },
-        // signature accent — sodium / spotlight gold (outside the score scale)
+        // Side Kick brand accent (set BRAND_HEX in lib/brand.ts to match site)
+        brand: {
+          DEFAULT: "#3D7BFF",
+          deep: "#2E5FD0",
+          soft: "#7CA6FF",
+        },
+        // alias so existing `gold` utility classes reskin to brand automatically
         gold: {
-          DEFAULT: "#F5C451",
-          deep: "#D9A436",
-          soft: "#F7D481",
+          DEFAULT: "#3D7BFF",
+          deep: "#2E5FD0",
+          soft: "#7CA6FF",
         },
         // semantic score scale
-        good: "#5FC98A",
+        good: "#48C78E",
         okk: "#E8983A",
         weak: "#E66B47",
-        crit: "#E04A3C",
+        crit: "#E0524A",
       },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],
@@ -44,7 +50,7 @@ const config: Config = {
         xl2: "1.25rem",
       },
       boxShadow: {
-        glow: "0 0 0 1px rgba(245,196,81,0.18), 0 0 40px -8px rgba(245,196,81,0.35)",
+        glow: "0 0 0 1px rgba(61,123,255,0.18), 0 0 40px -8px rgba(61,123,255,0.38)",
         panel: "0 1px 0 rgba(255,255,255,0.03) inset, 0 20px 60px -30px rgba(0,0,0,0.8)",
       },
     },

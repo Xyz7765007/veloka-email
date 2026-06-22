@@ -1,300 +1,225 @@
-import type { IntakeData } from "./types";
+import type { IntakeData, CampaignMode } from "@/lib/types";
 
 export const MODEL = process.env.OPENAI_MODEL || "gpt-5.4";
 
-export const SYSTEM_PROMPT = `You are the analysis engine behind Coldscore, a diagnostic tool built by Side Kick — a B2B outbound infrastructure studio. Your job: take ONE cold email plus the sender's ICP (ideal customer profile), and evaluate the email the way the *actual recipient* would read it — a busy, skeptical, time-poor B2B buyer who gets dozens of cold emails a day and deletes most of them in seconds.
+const MODE_GUIDE: Record<CampaignMode, string> = {
+  single:
+    "These are STANDALONE emails — each is its own first-touch attempt. Score each independently. Labels: 'Email 1', 'Email 2', 'Email 3'. The campaign summary should give a portfolio read (which is strongest, common weaknesses). winnerLabel must be \"\".",
+  sequence:
+    "These emails form a FOLLOW-UP SEQUENCE sent to the same prospect over time (step 1, step 2, step 3). Score each step AND judge the sequence as a whole: does it escalate value, avoid repeating the same ask/line, vary the angle, and build urgency without nagging? Labels: 'Step 1', 'Step 2', 'Step 3'. Put the flow critique in campaign.modeInsight. winnerLabel must be \"\".",
+  variations:
+    "These are A/B/C VARIATIONS of the same first-touch email, competing for the same goal. Score each, then pick the one most likely to win replies. Labels: 'Variation A', 'Variation B', 'Variation C'. Set campaign.winnerLabel to the winning label and explain why it wins (vs the others) in campaign.modeInsight.",
+};
 
-Operate by these principles:
+export const SYSTEM_PROMPT = `You are the senior cold-email strategist behind Side Kick (get-sidekick.com), a B2B outbound infrastructure agency with 20+ years of outbound experience. You judge cold emails the way a real, busy, slightly skeptical prospect would — not the way a marketer hopes they'll be read.
 
-1. Be specific to THIS email. Never give advice that could be pasted onto any email ("add personalization", "make it shorter", "add a clear CTA"). Point at exact words and phrases. Quote them.
+You will receive the sender's company, offer, goal, ICP, and one to three emails framed by a mode (standalone / sequence / variations). Analyse them and return a single structured JSON object.
 
-2. Inhabit the ICP. In the "icp" section you ARE that persona. React in first person. Be honest about the 3-second skim: what the eye catches, where attention dies, the gut feeling, and whether you would actually reply or just archive it.
+How to think:
+- Inhabit the ICP. Read each email as that exact persona in their real inbox: skim first, decide in seconds, mostly look for a reason to delete. Write the ICP read in FIRST PERSON ("I'd probably...").
+- Be specific to THESE emails. Quote the actual words. Never give generic cold-email advice that could apply to any email.
+- Be honest and conservative. Most cold emails are mediocre. Ground reply-rate estimates in real B2B benchmarks (a typical cold email gets ~1-5% positive replies; a great, highly-relevant one might reach 8-15%; spammy/generic ones near 0). Do not inflate.
+- Score 0-100 where 0-39 = will be deleted/ignored, 40-59 = weak but salvageable, 60-79 = solid, 80-100 = excellent and rare.
+- For deliverability, flag concrete spam/filter risks (spammy phrases, ALL CAPS, links, money/guarantee language, over-personalization tokens, length, image-heavy).
+- For line notes, the "excerpt" MUST be copied verbatim from that email's subject or body so it can be located in the original text. Keep excerpts short (a phrase, not a paragraph).
+- The rewrite must be a genuine, ready-to-send improvement built from the sender's actual offer and ICP — not a template.
 
-3. Ground reply estimates in reality. Cold B2B outbound positive-reply rates are usually 1-5%. 5-10% is good. Above 10% is exceptional and rare. Generic or spammy emails sit below 1%. Calibrate honestly — do not inflate.
+Mode-specific instructions: {{MODE_GUIDE}}
 
-4. Judge from multiple lenses. Provide reads from at least: "The Skeptic" (assumes you're wasting their time, hunts for reasons to delete), "The Busy Executive" (skims, only cares about relevance and effort-to-value), and "The Deliverability Filter" (spam/primary-inbox risk). Each lens should reach a concrete conclusion.
+Output rules:
+- Score every email provided, in order, in the "emails" array. Use the label scheme stated for this mode.
+- Per email provide 4-6 dimensions, 2-6 line notes, 3-5 priority fixes.
+- campaign.angles: exactly the three lenses "The Skeptic", "The Busy Executive", "The Deliverability Filter" applied across the set.
+- campaign.overallScore reflects the whole submission (for variations, weight toward the best; for a sequence, the sequence's combined effectiveness; for standalone, the overall quality of the set).
+- Never use em dashes (—) or en dashes (–) anywhere. Use commas, periods, or colons. This applies especially to the rewrite body, which must read as clean, ready-to-send copy.
+- Every field is mandatory. Return ONLY the JSON object matching the schema.`;
 
-5. Flag deliverability concretely. Call out spam-trigger words, risky phrasing, link/image load, ALL CAPS, "free"/"guarantee"/"act now", multiple CTAs, walls of text, spintax artifacts, and anything that risks the spam or promotions tab.
+// ---- OpenAI Structured Outputs schema (strict mode) ----
+// No minimum/maximum/minItems; additionalProperties:false + full required everywhere.
 
-6. The rewrite must be genuinely better and ready to send — not a template, not lorem. Keep the sender's real offer and facts. Make it tighter, more relevant to the ICP, and human. Provide 2-3 distinct subject line options.
-
-7. Be brutally honest but useful. No flattery, no filler, no hedging. Most cold emails are mediocre — score conservatively and explain why. Still surface real strengths where they exist.
-
-Scoring scale (0-100): 85+ exceptional, 70-84 strong, 55-69 average/usable, 40-54 weak, below 40 likely deleted on sight. Sub-dimension scores follow the same scale. The deliverability score is "safer = higher".
-
-Constraints on output:
-- Provide 5-7 dimensions covering: subject line, relevance to ICP, personalization, value proposition clarity, credibility/proof, call-to-action, and brevity/readability (merge sensibly to land in 5-7).
-- Provide exactly the three lenses named above as angles (you may add a fourth only if clearly warranted).
-- Provide 3-8 lineNotes. Each excerpt MUST be copied verbatim from the subject or body so it can be located in the original text. Mark its location.
-- Provide 3-5 priorityFixes, ranked 1..n by impact.
-- Keep prose tight: 1-3 sentences per field, no markdown, no emojis.
-
-Return your complete analysis as a single JSON object that exactly matches the required schema. Every field is mandatory — fill all of them.`;
-
-// JSON Schema for OpenAI Structured Outputs (strict mode).
-// Strict mode forbids minimum/maximum/minItems/maxItems and requires every
-// object to set additionalProperties:false and list ALL keys in `required`.
-// Count/range guidance lives in the system prompt and field descriptions.
-export const ANALYSIS_SCHEMA = {
-  type: "object" as const,
+const replyLikelihood = {
+  type: "object",
   additionalProperties: false,
   properties: {
-    overallScore: {
-      type: "integer",
-      description: "Overall quality of the email, 0-100.",
-    },
-    grade: {
-      type: "string",
-      description: "Letter grade matching the overall score, e.g. A, B+, C-.",
-    },
-    headline: {
-      type: "string",
-      description:
-        "A 2-4 word verdict label, e.g. 'Forgettable but salvageable', 'Instant delete', 'Sharp and relevant'.",
-    },
-    verdict: {
-      type: "string",
-      description: "One punchy sentence summarising the email's fate.",
-    },
-    replyLikelihood: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        band: {
-          type: "string",
-          enum: ["Very Low", "Low", "Moderate", "Strong", "High"],
-        },
-        range: {
-          type: "string",
-          description: "Estimated positive-reply rate range, e.g. '2-4%'.",
-        },
-        rationale: {
-          type: "string",
-          description: "Why this reply-rate band, in one sentence.",
-        },
-      },
-      required: ["band", "range", "rationale"],
-    },
-    icp: {
-      type: "object",
-      additionalProperties: false,
-      description:
-        "The email seen through the ICP's eyes. Written in first person as that persona.",
-      properties: {
-        persona: {
-          type: "string",
-          description:
-            "The specific persona you are imagining reading this (title + context).",
-        },
-        secondsToDecision: {
-          type: "string",
-          description: "How fast they decide, e.g. '~3s', '8s'.",
-        },
-        firstReaction: {
-          type: "string",
-          description:
-            "First-person gut reaction in the first few seconds of skimming.",
-        },
-        readThrough: {
-          type: "string",
-          description:
-            "First-person narrative of how they actually read (or skip through) the email.",
-        },
-        landsWell: {
-          type: "array",
-          items: { type: "string" },
-          description: "What genuinely lands with this persona.",
-        },
-        dropsOff: {
-          type: "array",
-          items: { type: "string" },
-          description: "Exact moments attention drops or trust breaks.",
-        },
-        wouldReply: {
-          type: "boolean",
-          description: "Would this persona actually reply?",
-        },
-        replyReasoning: {
-          type: "string",
-          description: "Why they would or wouldn't reply.",
-        },
-        feeling: {
-          type: "string",
-          description:
-            "Short emotional read, e.g. 'mildly curious', 'annoyed', 'pitched-at'.",
-        },
-      },
-      required: [
-        "persona",
-        "secondsToDecision",
-        "firstReaction",
-        "readThrough",
-        "landsWell",
-        "dropsOff",
-        "wouldReply",
-        "replyReasoning",
-        "feeling",
-      ],
-    },
-    dimensions: {
-      type: "array",
-      description:
-        "5 to 7 scoring dimensions covering subject line, relevance to ICP, personalization, value-prop clarity, credibility/proof, CTA, and brevity/readability (merged sensibly).",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          key: { type: "string", description: "Short stable id, e.g. 'subject'." },
-          label: { type: "string", description: "Human label, e.g. 'Subject line'." },
-          score: { type: "integer", description: "0-100." },
-          status: {
-            type: "string",
-            enum: ["strong", "ok", "weak", "critical"],
-          },
-          summary: { type: "string", description: "1-2 sentence justification." },
-        },
-        required: ["key", "label", "score", "status", "summary"],
-      },
-    },
-    angles: {
-      type: "array",
-      description:
-        "Exactly the three named lenses (The Skeptic, The Busy Executive, The Deliverability Filter); a fourth only if clearly warranted.",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          lens: { type: "string" },
-          read: { type: "string" },
-        },
-        required: ["lens", "read"],
-      },
-    },
-    lineNotes: {
-      type: "array",
-      description:
-        "3 to 8 notes. Each excerpt MUST be copied verbatim from the subject or body so it can be located in the original text.",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          excerpt: {
-            type: "string",
-            description:
-              "Verbatim phrase copied from the email so it can be highlighted in place.",
-          },
-          location: { type: "string", enum: ["subject", "body"] },
-          severity: { type: "string", enum: ["high", "medium", "low"] },
-          issue: { type: "string" },
-          suggestion: { type: "string" },
-        },
-        required: ["excerpt", "location", "severity", "issue", "suggestion"],
-      },
-    },
+    band: { type: "string", enum: ["Very Low", "Low", "Moderate", "Strong", "High"] },
+    range: { type: "string", description: "Positive-reply rate range, e.g. '2-4%'." },
+    rationale: { type: "string" },
+  },
+  required: ["band", "range", "rationale"],
+};
+
+const icp = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    persona: { type: "string" },
+    secondsToDecision: { type: "string", description: "e.g. '~3s'." },
+    firstReaction: { type: "string", description: "First-person gut reaction." },
+    readThrough: { type: "string", description: "First-person read-through narrative." },
+    landsWell: { type: "array", items: { type: "string" } },
+    dropsOff: { type: "array", items: { type: "string" } },
+    wouldReply: { type: "boolean" },
+    replyReasoning: { type: "string" },
+    feeling: { type: "string" },
+  },
+  required: ["persona", "secondsToDecision", "firstReaction", "readThrough", "landsWell", "dropsOff", "wouldReply", "replyReasoning", "feeling"],
+};
+
+const dimension = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    key: { type: "string" },
+    label: { type: "string" },
+    score: { type: "integer", description: "0-100." },
+    status: { type: "string", enum: ["strong", "ok", "weak", "critical"] },
+    summary: { type: "string" },
+  },
+  required: ["key", "label", "score", "status", "summary"],
+};
+
+const lineNote = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    excerpt: { type: "string", description: "Verbatim phrase from this email." },
+    location: { type: "string", enum: ["subject", "body"] },
+    severity: { type: "string", enum: ["high", "medium", "low"] },
+    issue: { type: "string" },
+    suggestion: { type: "string" },
+  },
+  required: ["excerpt", "location", "severity", "issue", "suggestion"],
+};
+
+const priorityFix = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    rank: { type: "integer" },
+    fix: { type: "string" },
+    impact: { type: "string", enum: ["high", "medium", "low"] },
+    why: { type: "string" },
+  },
+  required: ["rank", "fix", "impact", "why"],
+};
+
+const rewrite = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    subjectOptions: { type: "array", items: { type: "string" }, description: "2 to 3 subject line options." },
+    body: { type: "string", description: "Ready-to-send rewritten body." },
+    rationale: { type: "string" },
+  },
+  required: ["subjectOptions", "body", "rationale"],
+};
+
+const emailScore = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    label: { type: "string", description: "e.g. 'Email 1' / 'Variation A' / 'Step 1'." },
+    subject: { type: "string", description: "The subject line scored (verbatim)." },
+    overallScore: { type: "integer", description: "0-100." },
+    grade: { type: "string" },
+    headline: { type: "string", description: "2-4 word verdict label." },
+    verdict: { type: "string" },
+    replyLikelihood,
+    icp,
+    dimensions: { type: "array", items: dimension },
+    lineNotes: { type: "array", items: lineNote },
     deliverability: {
       type: "object",
       additionalProperties: false,
       properties: {
-        score: {
-          type: "integer",
-          description: "Inbox-safety score 0-100, higher = safer.",
-        },
-        triggers: {
-          type: "array",
-          items: { type: "string" },
-          description: "Specific spam/deliverability risks found.",
-        },
+        score: { type: "integer", description: "0-100, higher = safer." },
+        triggers: { type: "array", items: { type: "string" } },
         note: { type: "string" },
       },
       required: ["score", "triggers", "note"],
     },
-    strengths: {
+    strengths: { type: "array", items: { type: "string" } },
+    priorityFixes: { type: "array", items: priorityFix },
+    rewrite,
+  },
+  required: ["label", "subject", "overallScore", "grade", "headline", "verdict", "replyLikelihood", "icp", "dimensions", "lineNotes", "deliverability", "strengths", "priorityFixes", "rewrite"],
+};
+
+const campaign = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    overallScore: { type: "integer", description: "0-100 for the whole submission." },
+    grade: { type: "string" },
+    headline: { type: "string", description: "2-4 word overall verdict." },
+    verdict: { type: "string" },
+    summary: { type: "string", description: "Short narrative across the set." },
+    recommendation: { type: "string", description: "The single most important next move." },
+    modeInsight: { type: "string", description: "Mode-specific: sequence flow critique / why the winning variation wins / portfolio note for standalone." },
+    winnerLabel: { type: "string", description: "For variations: label of the best email. Empty string otherwise." },
+    angles: {
       type: "array",
-      items: { type: "string" },
-      description: "Genuine strengths worth keeping.",
-    },
-    priorityFixes: {
-      type: "array",
-      description: "3 to 5 fixes, ranked 1..n by impact.",
       items: {
         type: "object",
         additionalProperties: false,
-        properties: {
-          rank: { type: "integer" },
-          fix: { type: "string" },
-          impact: { type: "string", enum: ["high", "medium", "low"] },
-          why: { type: "string" },
-        },
-        required: ["rank", "fix", "impact", "why"],
+        properties: { lens: { type: "string" }, read: { type: "string" } },
+        required: ["lens", "read"],
       },
-    },
-    rewrite: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        subjectOptions: {
-          type: "array",
-          items: { type: "string" },
-          description: "2 to 3 distinct subject line options.",
-        },
-        body: {
-          type: "string",
-          description: "A ready-to-send rewritten email body.",
-        },
-        rationale: {
-          type: "string",
-          description: "What changed and why, in 1-2 sentences.",
-        },
-      },
-      required: ["subjectOptions", "body", "rationale"],
     },
   },
-  required: [
-    "overallScore",
-    "grade",
-    "headline",
-    "verdict",
-    "replyLikelihood",
-    "icp",
-    "dimensions",
-    "angles",
-    "lineNotes",
-    "deliverability",
-    "strengths",
-    "priorityFixes",
-    "rewrite",
-  ],
+  required: ["overallScore", "grade", "headline", "verdict", "summary", "recommendation", "modeInsight", "winnerLabel", "angles"],
+};
+
+export const ANALYSIS_SCHEMA = {
+  type: "object" as const,
+  additionalProperties: false,
+  properties: {
+    mode: { type: "string", enum: ["single", "sequence", "variations"] },
+    campaign,
+    emails: { type: "array", items: emailScore },
+  },
+  required: ["mode", "campaign", "emails"],
+};
+
+export function buildSystemPrompt(mode: CampaignMode): string {
+  return SYSTEM_PROMPT.replace("{{MODE_GUIDE}}", MODE_GUIDE[mode]);
+}
+
+const MODE_LABEL: Record<CampaignMode, string> = {
+  single: "Standalone emails (each independent)",
+  sequence: "Follow-up sequence (same prospect, over time)",
+  variations: "A/B/C variations (same goal, competing)",
 };
 
 export function buildUserPrompt(data: IntakeData): string {
   const icpLines = [
-    data.icpTitle && `Target title / persona: ${data.icpTitle}`,
-    data.icpIndustry && `Target industry / market: ${data.icpIndustry}`,
-    data.icpCompanySize && `Target company size: ${data.icpCompanySize}`,
-    data.icpPain && `Core pain they solve: ${data.icpPain}`,
-    data.icpNotes && `Additional ICP detail: ${data.icpNotes}`,
-  ]
-    .filter(Boolean)
-    .join("\n");
+    data.icpTitle && `- Title / role: ${data.icpTitle}`,
+    data.icpIndustry && `- Industry: ${data.icpIndustry}`,
+    data.icpCompanySize && `- Company size: ${data.icpCompanySize}`,
+    data.icpPain && `- Known pain: ${data.icpPain}`,
+    data.icpNotes && `- Extra ICP notes: ${data.icpNotes}`,
+  ].filter(Boolean).join("\n");
 
-  return `Analyse the cold email below for this sender.
+  const emailBlocks = data.emails.map((e, i) => {
+    return `--- EMAIL ${i + 1} ---
+Subject: ${e.subject || "(no subject)"}
+Body:
+${e.body}`;
+  }).join("\n\n");
 
-=== SENDER ===
-Company: ${data.company || "(not given)"}
-${data.website ? `Website: ${data.website}` : ""}
-What they sell: ${data.offering || "(not given)"}
-Campaign goal: ${data.goal || "(not given)"}
+  return `SENDER
+- Company: ${data.company || "(not given)"}
+- Website: ${data.website || "(not given)"}
+- What they sell: ${data.offering || "(not given)"}
+- Campaign goal: ${data.goal || "(not given)"}
 
-=== IDEAL CUSTOMER PROFILE (the recipient) ===
-${icpLines || "(no ICP details supplied — infer a reasonable B2B buyer)"}
+ICP (who these emails are aimed at)
+${icpLines || "- (not specified - infer a reasonable buyer)"}
 
-=== COLD EMAIL UNDER TEST ===
-SUBJECT: ${data.subject || "(no subject line provided)"}
+SUBMISSION MODE: ${MODE_LABEL[data.mode]}
+Number of emails: ${data.emails.length}
 
-BODY:
-${data.body}
+${emailBlocks}
 
-=== END ===
-
-Evaluate it through the eyes of the ICP above, from every angle, and return the full analysis as the structured JSON object.`;
+Evaluate through the eyes of the ICP above, follow the mode-specific instructions, and return the full structured JSON analysis.`;
 }
