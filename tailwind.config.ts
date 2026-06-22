@@ -8,35 +8,36 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // cool, clean B2B dark base
+        // light, clean base — page + surfaces
         ink: {
-          DEFAULT: "#0B0D12",
-          2: "#11141B",
-          3: "#1A1E27",
-          4: "#242A36",
+          DEFAULT: "#FFFFFF", // page background
+          2: "#F5F4F2", // inputs / inset sub-surfaces
+          3: "#ECEAE6", // hover / darker inset
+          4: "#E2DFDA", // borders
         },
+        // dark text on light
         bone: {
-          DEFAULT: "#EDF1F7",
-          dim: "#99A2B2",
-          faint: "#5C6675",
+          DEFAULT: "#1A1B1E",
+          dim: "#585E66",
+          faint: "#9CA0A6",
         },
         // Side Kick brand accent (set BRAND_HEX in lib/brand.ts to match site)
         brand: {
-          DEFAULT: "#3D7BFF",
-          deep: "#2E5FD0",
-          soft: "#7CA6FF",
+          DEFAULT: "#FF6F30",
+          deep: "#E85D1E",
+          soft: "#FF8A52",
         },
         // alias so existing `gold` utility classes reskin to brand automatically
         gold: {
-          DEFAULT: "#3D7BFF",
-          deep: "#2E5FD0",
-          soft: "#7CA6FF",
+          DEFAULT: "#FF6F30",
+          deep: "#E85D1E",
+          soft: "#FF8A52",
         },
-        // semantic score scale
-        good: "#48C78E",
-        okk: "#E8983A",
-        weak: "#E66B47",
-        crit: "#E0524A",
+        // semantic score scale (deepened for contrast on white)
+        good: "#16A34A",
+        okk: "#D9831F",
+        weak: "#E2622F",
+        crit: "#D33A2C",
       },
       fontFamily: {
         display: ["var(--font-display)", "system-ui", "sans-serif"],
@@ -50,8 +51,8 @@ const config: Config = {
         xl2: "1.25rem",
       },
       boxShadow: {
-        glow: "0 0 0 1px rgba(61,123,255,0.18), 0 0 40px -8px rgba(61,123,255,0.38)",
-        panel: "0 1px 0 rgba(255,255,255,0.03) inset, 0 20px 60px -30px rgba(0,0,0,0.8)",
+        glow: "0 0 0 1px rgba(255,111,48,0.18), 0 10px 30px -10px rgba(255,111,48,0.40)",
+        panel: "0 1px 2px rgba(17,17,17,0.04), 0 16px 40px -24px rgba(17,17,17,0.16)",
       },
     },
   },

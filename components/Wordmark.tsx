@@ -1,7 +1,7 @@
 "use client";
 
 export function Wordmark({ small = false }: { small?: boolean }) {
-  const c = "#3D7BFF";
+  const c = "#FF6F30";
   return (
     <div className="flex items-center gap-2.5 select-none">
       <span className="relative inline-flex">

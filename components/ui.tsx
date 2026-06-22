@@ -75,7 +75,7 @@ export function RadialGauge({
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="rgba(241,234,220,0.08)"
+        stroke="rgba(20,20,24,0.09)"
         strokeWidth={stroke}
       />
       <motion.circle

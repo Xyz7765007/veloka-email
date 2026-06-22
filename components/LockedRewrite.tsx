@@ -110,7 +110,7 @@ export function LockedRewrite({ rewrite }: { rewrite: Rewrite }) {
                 className="pointer-events-none absolute inset-x-0 bottom-0 h-14"
                 style={{
                   background:
-                    "linear-gradient(180deg, transparent, var(--ink, #0B0D12))",
+                    "linear-gradient(180deg, transparent, var(--ink, #ffffff))",
                 }}
               />
             )}

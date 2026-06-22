@@ -2,15 +2,15 @@ import type { Status, Severity, Impact } from "./types";
 
 // Hex values mirror tailwind.config.ts semantic scale.
 export const COLORS = {
-  good: "#48C78E",
-  ok: "#E8983A",
-  weak: "#E66B47",
-  crit: "#E0524A",
-  gold: "#3D7BFF",
-  brand: "#3D7BFF",
-  bone: "#EDF1F7",
-  boneDim: "#99A2B2",
-  ink: "#0B0D12",
+  good: "#16A34A",
+  ok: "#D9831F",
+  weak: "#E2622F",
+  crit: "#D33A2C",
+  gold: "#FF6F30",
+  brand: "#FF6F30",
+  bone: "#1A1B1E",
+  boneDim: "#585E66",
+  ink: "#FFFFFF",
 };
 
 export function scoreColor(score: number): string {

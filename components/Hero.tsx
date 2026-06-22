@@ -59,7 +59,7 @@ export function Hero({ onStart }: { onStart: () => void }) {
                 >
                   <motion.path
                     d="M2 7C40 3 160 3 198 6"
-                    stroke="#3D7BFF"
+                    stroke="#FF6F30"
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     initial={{ pathLength: 0 }}
@@ -148,8 +148,8 @@ function Specimen() {
           className="pointer-events-none absolute inset-x-0 z-20 h-24"
           style={{
             background:
-              "linear-gradient(180deg, transparent, rgba(61,123,255,0.16) 60%, rgba(61,123,255,0.5))",
-            borderBottom: "1.5px solid rgba(61,123,255,0.8)",
+              "linear-gradient(180deg, transparent, rgba(255,111,48,0.16) 60%, rgba(255,111,48,0.5))",
+            borderBottom: "1.5px solid rgba(255,111,48,0.8)",
             animation: "sweep 4.2s ease-in-out infinite",
           }}
         />

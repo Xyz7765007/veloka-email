@@ -155,8 +155,8 @@ export function EmailMarkup({
               onMouseLeave={() => setActive(null)}
               className="rounded-xl border p-3.5 transition-all duration-200"
               style={{
-                borderColor: isActive ? `${c}66` : "rgba(241,234,220,0.1)",
-                background: isActive ? `${c}0d` : "rgba(23,21,15,0.4)",
+                borderColor: isActive ? `${c}66` : "rgba(20,20,24,0.12)",
+                background: isActive ? `${c}0d` : "rgba(245,244,242,0.85)",
               }}
             >
               <div className="flex items-center gap-2.5">

@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --ink: #0b0d12;
-  --ink-2: #11141b;
-  --ink-3: #1a1e27;
-  --gold: #3d7bff;
-  --brand: #3d7bff;
-  --bone: #edf1f7;
+  --ink: #ffffff;
+  --ink-2: #f5f4f2;
+  --ink-3: #eceae6;
+  --gold: #ff6f30;
+  --brand: #ff6f30;
+  --bone: #1a1b1e;
   /* font stacks — families come from the @fontsource imports in layout.tsx */
   --font-display: "Space Grotesk Variable", system-ui, sans-serif;
   --font-body: "Hanken Grotesk Variable", system-ui, sans-serif;
@@ -31,7 +31,7 @@ body {
   overflow-x: hidden;
 }
 
-/* The warm ambient field behind everything: fine grid + drifting glow + grain */
+/* The clean ambient field behind everything: faint grid + soft glow */
 .field {
   position: fixed;
   inset: 0;
@@ -46,10 +46,10 @@ body {
   inset: 0;
   background-image: linear-gradient(
       to right,
-      rgba(241, 234, 220, 0.035) 1px,
+      rgba(20, 20, 24, 0.028) 1px,
       transparent 1px
     ),
-    linear-gradient(to bottom, rgba(241, 234, 220, 0.035) 1px, transparent 1px);
+    linear-gradient(to bottom, rgba(20, 20, 24, 0.028) 1px, transparent 1px);
   background-size: 64px 64px;
   mask-image: radial-gradient(
     ellipse 80% 70% at 50% 30%,
@@ -58,13 +58,13 @@ body {
   );
 }
 .field::after {
-  /* warm vignette */
+  /* soft warm glow */
   content: "";
   position: absolute;
   inset: 0;
   background: radial-gradient(
     120% 90% at 50% -10%,
-    rgba(61, 123, 255, 0.07),
+    rgba(255, 111, 48, 0.06),
     transparent 55%
   );
 }
@@ -74,8 +74,8 @@ body {
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.045;
-  mix-blend-mode: overlay;
+  opacity: 0.022;
+  mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -91,7 +91,7 @@ body {
   border-radius: 9999px;
   background: radial-gradient(
     circle,
-    rgba(61, 123, 255, 0.1),
+    rgba(255, 111, 48, 0.06),
     transparent 62%
   );
   filter: blur(30px);
@@ -157,17 +157,17 @@ body {
   background: var(--ink);
 }
 ::-webkit-scrollbar-thumb {
-  background: #2c271c;
+  background: #d9d6d0;
   border-radius: 999px;
   border: 2px solid var(--ink);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3424;
+  background: #c7c3bc;
 }
 
 ::selection {
-  background: rgba(61, 123, 255, 0.28);
-  color: #fff;
+  background: rgba(255, 111, 48, 0.22);
+  color: #1a1b1e;
 }
 
 /* Eyebrow / mono labels */
@@ -181,14 +181,11 @@ body {
 
 /* Panel surface */
 .panel {
-  background: linear-gradient(
-    180deg,
-    rgba(35, 31, 22, 0.55),
-    rgba(23, 21, 15, 0.55)
-  );
-  border: 1px solid rgba(241, 234, 220, 0.08);
+  background: #ffffff;
+  border: 1px solid rgba(20, 20, 24, 0.08);
   border-radius: 1.1rem;
-  backdrop-filter: blur(6px);
+  box-shadow: 0 1px 2px rgba(17, 17, 17, 0.04),
+    0 18px 44px -28px rgba(17, 17, 17, 0.18);
 }
 
 input,
@@ -203,9 +200,9 @@ textarea {
 /* Focus ring */
 .focusable:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 1px rgba(61, 123, 255, 0.55),
-    0 0 0 4px rgba(61, 123, 255, 0.12);
-  border-color: rgba(61, 123, 255, 0.55) !important;
+  box-shadow: 0 0 0 1px rgba(255, 111, 48, 0.55),
+    0 0 0 4px rgba(255, 111, 48, 0.14);
+  border-color: rgba(255, 111, 48, 0.55) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

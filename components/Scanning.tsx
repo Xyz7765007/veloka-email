@@ -79,8 +79,8 @@ export function Scanning({
             className="pointer-events-none absolute inset-x-0 z-20 h-28"
             style={{
               background:
-                "linear-gradient(180deg, transparent, rgba(61,123,255,0.14) 55%, rgba(61,123,255,0.45))",
-              borderBottom: "1.5px solid rgba(61,123,255,0.85)",
+                "linear-gradient(180deg, transparent, rgba(255,111,48,0.14) 55%, rgba(255,111,48,0.45))",
+              borderBottom: "1.5px solid rgba(255,111,48,0.85)",
               animation: "sweep 2.4s ease-in-out infinite",
             }}
           />

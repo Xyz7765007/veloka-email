@@ -16,4 +16,4 @@ export const BRAND = {
 
 // Primary accent. Change this one value (and the matching token in
 // tailwind.config.ts) to re-skin the whole app to the exact brand colour.
-export const BRAND_HEX = "#3D7BFF";
+export const BRAND_HEX = "#FF6F30";
