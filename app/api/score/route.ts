@@ -8,6 +8,8 @@ import {
 } from "@/lib/prompt";
 import type { Analysis, IntakeData } from "@/lib/types";
 import { saveScan } from "@/lib/airtable";
+import { isAdminRequest } from "@/lib/auth";
+import { getClient, recordUsage, type ClientRecord } from "@/lib/clients";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,9 +27,9 @@ export async function POST(req: Request) {
     );
   }
 
-  let data: IntakeData;
+  let data: IntakeData & { clientSlug?: string };
   try {
-    data = (await req.json()) as IntakeData;
+    data = (await req.json()) as IntakeData & { clientSlug?: string };
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
@@ -49,6 +51,48 @@ export async function POST(req: Request) {
     .filter((e) => e && (e.body?.trim() || e.subject?.trim()))
     .slice(0, 3);
   if (!data.mode) data.mode = "single";
+
+  // ---- access + quota gate (the ONLY place OpenAI credits are spent) ----
+  // Team requests (valid access cookie) are unlimited. Everyone else must
+  // present a valid client link whose remaining quota covers this submission.
+  const admin = isAdminRequest(req);
+  let client: ClientRecord | null = null;
+  if (!admin) {
+    const slug = (data.clientSlug || "").trim();
+    if (!slug) {
+      return NextResponse.json(
+        { error: "This scorer requires a valid access link." },
+        { status: 401 }
+      );
+    }
+    client = await getClient(slug);
+    if (!client || client.status === "disabled") {
+      return NextResponse.json(
+        { error: "This link is invalid or has been disabled." },
+        { status: 403 }
+      );
+    }
+    if (client.remaining <= 0) {
+      return NextResponse.json(
+        {
+          error: "This link has used all of its email scoring.",
+          quota: { used: client.used, quota: client.quota, remaining: 0 },
+        },
+        { status: 403 }
+      );
+    }
+    if (data.emails.length > client.remaining) {
+      return NextResponse.json(
+        {
+          error: `This link has ${client.remaining} email${
+            client.remaining === 1 ? "" : "s"
+          } of scoring left. Reduce the number of emails and try again.`,
+          quota: { used: client.used, quota: client.quota, remaining: client.remaining },
+        },
+        { status: 403 }
+      );
+    }
+  }
 
   const openai = new OpenAI({ apiKey });
 
@@ -123,13 +167,22 @@ export async function POST(req: Request) {
 
     // Best-effort persistence to Airtable with the FULL analysis (incl. full
     // rewrites). Never blocks or fails the scan.
-    const persisted = await saveScan(data, analysis as Analysis, MODEL);
+    const persisted = await saveScan(data, analysis as Analysis, MODEL, client?.slug);
+
+    // The scan succeeded — decrement the client's quota (team is unlimited).
+    if (client) {
+      await recordUsage(client, data.emails.length);
+    }
 
     // Gate the rewrite for the client: subjects stay full, the rewritten body
     // is truncated to a teaser so the full value sits behind a booked call.
     gateForClient(analysis);
 
-    return NextResponse.json({ analysis, saved: persisted.saved });
+    const remaining = client
+      ? Math.max(0, client.remaining - data.emails.length)
+      : null;
+
+    return NextResponse.json({ analysis, saved: persisted.saved, remaining });
   } catch (err: unknown) {
     const status =
       err && typeof err === "object" && "status" in err

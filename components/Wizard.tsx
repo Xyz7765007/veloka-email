@@ -77,10 +77,13 @@ function Chips({
 export function Wizard({
   onComplete,
   onBack,
+  maxEmails = 3,
 }: {
   onComplete: (data: IntakeData) => void;
   onBack: () => void;
+  maxEmails?: number;
 }) {
+  const cap = Math.max(1, Math.min(3, maxEmails));
   const [step, setStep] = useState(0);
   const [dir, setDir] = useState(1);
   const [d, setD] = useState<IntakeData>({
@@ -104,7 +107,7 @@ export function Wizard({
       emails: p.emails.map((e, idx) => (idx === i ? { ...e, [k]: v } : e)),
     }));
   const addEmail = () =>
-    setD((p) => (p.emails.length >= 3 ? p : { ...p, emails: [...p.emails, { subject: "", body: "" }] }));
+    setD((p) => (p.emails.length >= cap ? p : { ...p, emails: [...p.emails, { subject: "", body: "" }] }));
   const removeEmail = (i: number) =>
     setD((p) => (p.emails.length <= 1 ? p : { ...p, emails: p.emails.filter((_, idx) => idx !== i) }));
   const setMode = (m: CampaignMode) => setD((p) => ({ ...p, mode: m }));
@@ -288,7 +291,7 @@ export function Wizard({
                     </div>
                   ))}
 
-                  {d.emails.length < 3 && (
+                  {d.emails.length < cap && (
                     <button
                       type="button"
                       onClick={addEmail}
@@ -297,6 +300,11 @@ export function Wizard({
                       <Plus size={15} />
                       Add {d.mode === "variations" ? "a variation" : d.mode === "sequence" ? "a step" : "an email"}
                     </button>
+                  )}
+                  {cap < 3 && (
+                    <p className="text-center font-mono text-[0.62rem] uppercase tracking-[0.14em] text-bone-faint">
+                      {cap === 1 ? "1 email" : `${cap} emails`} left on this link
+                    </p>
                   )}
                 </div>
               </div>

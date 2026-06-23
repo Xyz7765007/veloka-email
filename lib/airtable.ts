@@ -29,6 +29,7 @@ type FieldSpec = { name: string; type: string; options?: Record<string, unknown>
 // computed fields can't be written via the API anyway.)
 const FIELD_SPECS: FieldSpec[] = [
   { name: "Company", type: "singleLineText" }, // first entry = primary field
+  { name: "Client", type: "singleLineText" }, // client link slug (blank = team scan)
   { name: "Website", type: "singleLineText" },
   { name: "Offering", type: "multilineText" },
   { name: "Goal", type: "singleLineText" },
@@ -260,10 +261,12 @@ type SaveResult = { saved: boolean; error?: string };
 function richFields(
   intake: IntakeData,
   analysis: Analysis,
-  model: string
+  model: string,
+  clientSlug?: string
 ): Record<string, unknown> {
   return {
     Company: intake.company || "",
+    Client: clientSlug || "",
     Website: intake.website || "",
     Offering: intake.offering || "",
     Goal: intake.goal || "",
@@ -315,7 +318,8 @@ async function postRecord(
 export async function saveScan(
   intake: IntakeData,
   analysis: Analysis,
-  model: string
+  model: string,
+  clientSlug?: string
 ): Promise<SaveResult> {
   const token = process.env.AIRTABLE_API_KEY;
   const baseId = process.env.AIRTABLE_BASE_ID;
@@ -331,7 +335,7 @@ export async function saveScan(
       baseId,
       table,
       token,
-      richFields(intake, analysis, model)
+      richFields(intake, analysis, model, clientSlug)
     );
 
     if (!res.ok && res.status === 422) {
