@@ -1,6 +1,11 @@
 /** CLI-only Tailwind config for compiling the Framer component's CSS.
  *  Mirrors tailwind.config.ts theme; adds framer/ to the content scan. */
 module.exports = {
+  // Scope + specificity: every utility becomes `.cs-root .util`, so utilities
+  // never leak onto the Framer page and always out-specify the scoped reset.
+  important: ".cs-root",
+  // Preflight is replaced by a scoped reset in framer/_input.css.
+  corePlugins: { preflight: false },
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",

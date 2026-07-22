@@ -1,42 +1,194 @@
 @tailwind base;
 @tailwind components;
-@tailwind utilities;
 
-:root {
+/* ───────────────────────────────────────────────────────────────────────────
+   Preflight is DISABLED and `important: ".cs-root"` is set in
+   tailwind.framer.cjs. That makes every Tailwind utility a `.cs-root .util`
+   rule — so (a) utilities only apply inside this component and never leak onto
+   the Framer page, and (b) utilities out-specify the scoped reset below.
+   `@tailwind utilities` is emitted LAST so utilities also win any same-
+   specificity tie against the custom component classes (.panel, etc.).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.cs-root {
   --ink: #ffffff;
   --ink-2: #f5f4f2;
   --ink-3: #eceae6;
   --gold: #ff6f30;
   --brand: #ff6f30;
   --bone: #1a1b1e;
-  /* Google Fonts families (loaded into the document head at runtime) */
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-body: "Hanken Grotesk", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
-}
 
-* {
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
   color: var(--bone);
   font-family: var(--font-body), system-ui, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-.field {
+/* scoped reset (replaces Tailwind preflight) */
+.cs-root,
+.cs-root *,
+.cs-root *::before,
+.cs-root *::after {
+  box-sizing: border-box;
+  border-width: 0;
+  border-style: solid;
+  border-color: currentColor;
+}
+.cs-root h1,
+.cs-root h2,
+.cs-root h3,
+.cs-root h4,
+.cs-root h5,
+.cs-root h6 {
+  font-size: inherit;
+  font-weight: inherit;
+  margin: 0;
+}
+.cs-root p,
+.cs-root pre,
+.cs-root figure,
+.cs-root blockquote {
+  margin: 0;
+}
+.cs-root ul,
+.cs-root ol,
+.cs-root menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cs-root a {
+  color: inherit;
+  text-decoration: inherit;
+}
+.cs-root b,
+.cs-root strong {
+  font-weight: bolder;
+}
+.cs-root button,
+.cs-root input,
+.cs-root textarea,
+.cs-root select {
+  font-family: inherit;
+  font-size: 100%;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+}
+.cs-root button {
+  background-color: transparent;
+  background-image: none;
+  cursor: pointer;
+  text-transform: none;
+  -webkit-appearance: button;
+}
+.cs-root :disabled {
+  cursor: default;
+}
+.cs-root input,
+.cs-root textarea {
+  font-family: var(--font-body), system-ui, sans-serif;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+}
+.cs-root input::placeholder,
+.cs-root textarea::placeholder {
+  opacity: 1;
+  color: #9ca0a6;
+}
+.cs-root textarea {
+  resize: vertical;
+}
+.cs-root img,
+.cs-root svg,
+.cs-root video,
+.cs-root canvas {
+  display: block;
+  vertical-align: middle;
+}
+.cs-root sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+  top: -0.5em;
+}
+.cs-root pre,
+.cs-root code {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+/* Tailwind CSS-variable defaults (normally emitted by preflight). */
+.cs-root *,
+.cs-root *::before,
+.cs-root *::after {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x: ;
+  --tw-pan-y: ;
+  --tw-pinch-zoom: ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position: ;
+  --tw-gradient-via-position: ;
+  --tw-gradient-to-position: ;
+  --tw-ordinal: ;
+  --tw-slashed-zero: ;
+  --tw-numeric-figure: ;
+  --tw-numeric-spacing: ;
+  --tw-numeric-fraction: ;
+  --tw-ring-inset: ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur: ;
+  --tw-brightness: ;
+  --tw-contrast: ;
+  --tw-grayscale: ;
+  --tw-hue-rotate: ;
+  --tw-invert: ;
+  --tw-saturate: ;
+  --tw-sepia: ;
+  --tw-drop-shadow: ;
+  --tw-backdrop-blur: ;
+  --tw-backdrop-brightness: ;
+  --tw-backdrop-contrast: ;
+  --tw-backdrop-grayscale: ;
+  --tw-backdrop-hue-rotate: ;
+  --tw-backdrop-invert: ;
+  --tw-backdrop-opacity: ;
+  --tw-backdrop-saturate: ;
+  --tw-backdrop-sepia: ;
+}
+
+/* Ambient field behind everything: faint grid + soft glow */
+.cs-root .field {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   background-color: var(--ink);
 }
-.field::before {
+.cs-root .field::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -47,13 +199,18 @@ body {
     ),
     linear-gradient(to bottom, rgba(20, 20, 24, 0.028) 1px, transparent 1px);
   background-size: 64px 64px;
-  mask-image: radial-gradient(
+  -webkit-mask-image: radial-gradient(
+    ellipse 80% 70% at 50% 30%,
+    black 35%,
+    transparent 85%
+  );
+          mask-image: radial-gradient(
     ellipse 80% 70% at 50% 30%,
     black 35%,
     transparent 85%
   );
 }
-.field::after {
+.cs-root .field::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -63,8 +220,7 @@ body {
     transparent 55%
   );
 }
-
-.grain {
+.cs-root .grain {
   position: fixed;
   inset: 0;
   z-index: 1;
@@ -73,8 +229,7 @@ body {
   mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-
-.drift {
+.cs-root .drift {
   position: fixed;
   z-index: 0;
   pointer-events: none;
@@ -89,9 +244,37 @@ body {
     transparent 62%
   );
   filter: blur(30px);
-  animation: drift 26s ease-in-out infinite alternate;
+  animation: cs-drift 26s ease-in-out infinite alternate;
 }
-@keyframes drift {
+.cs-root .caret {
+  animation: cs-blink 1s steps(1) infinite;
+}
+.cs-root .eyebrow {
+  font-family: var(--font-mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.68rem;
+  color: var(--gold);
+}
+.cs-root .panel {
+  background: #ffffff;
+  border: 1px solid rgba(20, 20, 24, 0.08);
+  border-radius: 1.1rem;
+  box-shadow: 0 1px 2px rgba(17, 17, 17, 0.04),
+    0 18px 44px -28px rgba(17, 17, 17, 0.18);
+}
+.cs-root .focusable:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(255, 111, 48, 0.55),
+    0 0 0 4px rgba(255, 111, 48, 0.14);
+  border-color: rgba(255, 111, 48, 0.55) !important;
+}
+.cs-root ::selection {
+  background: rgba(255, 111, 48, 0.22);
+  color: #1a1b1e;
+}
+
+@keyframes cs-drift {
   0% {
     transform: translate(-12%, -18%) scale(1);
   }
@@ -99,8 +282,7 @@ body {
     transform: translate(14%, 10%) scale(1.18);
   }
 }
-
-@keyframes sweep {
+@keyframes cs-sweep {
   0% {
     transform: translateY(-8%);
     opacity: 0;
@@ -116,8 +298,7 @@ body {
     opacity: 0;
   }
 }
-
-@keyframes blink {
+@keyframes cs-blink {
   0%,
   100% {
     opacity: 1;
@@ -126,62 +307,11 @@ body {
     opacity: 0.15;
   }
 }
-.caret {
-  animation: blink 1s steps(1) infinite;
-}
-
-@keyframes pulsering {
-  0% {
-    transform: scale(0.7);
-    opacity: 0.7;
-  }
-  100% {
-    transform: scale(1.8);
-    opacity: 0;
-  }
-}
-
-::selection {
-  background: rgba(255, 111, 48, 0.22);
-  color: #1a1b1e;
-}
-
-.eyebrow {
-  font-family: var(--font-mono), monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  font-size: 0.68rem;
-  color: var(--gold);
-}
-
-.panel {
-  background: #ffffff;
-  border: 1px solid rgba(20, 20, 24, 0.08);
-  border-radius: 1.1rem;
-  box-shadow: 0 1px 2px rgba(17, 17, 17, 0.04),
-    0 18px 44px -28px rgba(17, 17, 17, 0.18);
-}
-
-input,
-textarea {
-  font-family: var(--font-body), system-ui, sans-serif;
-}
-
-textarea {
-  resize: vertical;
-}
-
-.focusable:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 1px rgba(255, 111, 48, 0.55),
-    0 0 0 4px rgba(255, 111, 48, 0.14);
-  border-color: rgba(255, 111, 48, 0.55) !important;
-}
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  .cs-root *,
+  .cs-root *::before,
+  .cs-root *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
@@ -189,10 +319,4 @@ textarea {
   }
 }
 
-/* Root wrapper inside the shadow tree — replaces body-level styling. */
-.cs-root {
-  color: var(--bone);
-  font-family: var(--font-body), system-ui, sans-serif;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+@tailwind utilities;

@@ -3,8 +3,10 @@
 `Coldscore.tsx` is the full Coldscore app packaged as a **single Framer code
 component**. The entire end-user flow — Hero → intake wizard → scanning →
 report + branded PDF — is ported verbatim, with the original design preserved
-pixel-for-pixel (the compiled Tailwind CSS is embedded and rendered inside a
-Shadow DOM so it can neither leak into nor be broken by the Framer page).
+pixel-for-pixel. The compiled Tailwind CSS is embedded and fully scoped to a
+`.cs-root` wrapper (Tailwind `important: ".cs-root"` + preflight disabled), so
+every rule stays inside the component and nothing leaks onto — or is broken by —
+the surrounding Framer page.
 
 ## How env variables are handled
 
@@ -83,9 +85,9 @@ change any component styling and want to refresh it:
 
 ```bash
 npx tailwindcss -c tailwind.framer.cjs -i framer/_input.css -o framer/coldscore.raw.css
-# then remap the custom :root block to the shadow tree and re-inject:
-#   :root {   →   :host, .cs-root {
-# and paste the result into the COLDSCORE_CSS constant in Coldscore.tsx
+# then paste the result into the COLDSCORE_CSS constant in Coldscore.tsx.
+# The config uses `important: ".cs-root"` + `corePlugins.preflight: false`,
+# so every rule is already scoped to the .cs-root wrapper — no post-processing.
 ```
 
 `tailwind.framer.cjs` and `framer/_input.css` are the build inputs kept
