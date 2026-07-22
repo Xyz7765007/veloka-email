@@ -25,9 +25,11 @@ optional Airtable vars) from Vercel. Nothing sensitive is shipped to Framer.
    cross-origin calls to `/api/*` and answers preflight requests. It is additive
    — it does not modify `app/api/score/route.ts`. Deploy it once so Framer (a
    different origin) can reach `/api/score`.
-3. **Create an access link.** The scorer gates non-admin requests behind a
-   client link with a scoring quota. Open the app's admin console, create a link
-   for this Framer placement, and copy its **slug** (e.g. `veloka`).
+3. **Create per-prospect access links.** The scorer gates non-admin requests
+   behind a client link with a small scoring quota (default 3) so recipients
+   can't spam it. Create one link per prospect in the admin console and send it
+   to them — the Framer page is where they *paste* it (see below). You do **not**
+   hard-code a slug into the component.
 
 ## Add to Framer
 
@@ -38,13 +40,28 @@ optional Airtable vars) from Vercel. Nothing sensitive is shipped to Framer.
 3. In the properties panel set:
    - **API base URL** — your deployed app, e.g. `https://veloka-email.vercel.app`
      (no trailing slash needed).
-   - **Access link slug** — the slug from step 3 above.
+   - **Access link slug** — leave **blank**. It's an optional prefill for your
+     own testing only; in normal use each prospect pastes their own link.
    - **Client name / Company / Book-a-call URL / Site URL** — optional brand
      overrides (default to Side Kick / get-sidekick.com).
 
-That's it. The scan runs against your backend; quota exhaustion and errors are
-handled by the built-in screens, and the PDF report is generated client-side
-(jsPDF is loaded lazily only when someone downloads it).
+## How prospects use it
+
+The hero has a **"Received a link from us? Paste it here"** box. The prospect
+pastes the link you sent them (either the full URL like
+`https://veloka-email.vercel.app/veloka-x7k2` or just the `veloka-x7k2` code) —
+the component extracts the slug and scores against **their** quota. So the page
+never holds a slug that goes stale, and links can't be spammed by strangers.
+
+Two more entry points on the hero:
+- **See a sample report** — loads a prefilled simulation (the Acme specimen
+  scoring 31/100) so a prospect with no link still sees the full value, without
+  spending a scan.
+- **No link yet? Request access** — links to your book-a-call URL for opt-in.
+
+The scan runs against your backend; quota exhaustion and errors are handled by
+the built-in screens, and the PDF report is generated client-side (jsPDF is
+loaded lazily only when someone downloads it).
 
 ## Repo integration note
 
