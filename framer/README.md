@@ -46,6 +46,14 @@ That's it. The scan runs against your backend; quota exhaustion and errors are
 handled by the built-in screens, and the PDF report is generated client-side
 (jsPDF is loaded lazily only when someone downloads it).
 
+## Repo integration note
+
+This file lives inside the Next.js project but is **not** part of the app — it
+imports the `framer` package, which only exists in Framer's runtime. So
+`framer/` is added to `exclude` in `tsconfig.json`; otherwise `next build`'s
+type-check fails with *"Cannot find module 'framer'"*. Keep that exclude in
+place. Nothing in the app imports this component.
+
 ## Dependencies
 
 Framer resolves these automatically — no action needed:
