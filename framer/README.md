@@ -75,8 +75,15 @@ place. Nothing in the app imports this component.
 
 ## Dependencies
 
-Framer resolves these automatically — no action needed:
-`framer-motion`, `lucide-react`, and `jspdf` (lazy, download-only).
+Only two npm packages, both resolved by Framer automatically — no action needed:
+`framer-motion` and `lucide-react`.
+
+**jsPDF is NOT bundled.** Framer can't resolve a bare `jspdf` import, so the PDF
+library is loaded from a CDN at runtime (`cdnjs`, jsPDF 2.5.1) only when someone
+clicks *Download report*. If the CDN is ever blocked, the download button fails
+gracefully with an on-screen message; the rest of the app is unaffected. To pin
+a different version or host, change `JSPDF_CDN` near the top of the PDF section
+in `Coldscore.tsx`.
 
 ## Rebuilding the embedded CSS
 

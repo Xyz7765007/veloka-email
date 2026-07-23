@@ -474,13 +474,55 @@ function teaserOf(body: string): { teaser: string; locked: boolean } {
     }
     return { teaser: text.slice(0, cut).trim(), locked: true }
 }
+
+// jsPDF is loaded from a CDN at runtime (only when a report is downloaded), not
+// imported as a bundled package — so Framer never has to resolve a `jspdf`
+// module. The download button already handles a load failure gracefully.
+const JSPDF_CDN =
+    "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+let jspdfPromise: Promise<any> | null = null
+function loadJsPDF(): Promise<any> {
+    if (typeof window === "undefined") {
+        return Promise.reject(new Error("jsPDF unavailable"))
+    }
+    const ready = () => (window as any).jspdf?.jsPDF
+    if (ready()) return Promise.resolve(ready())
+    if (!jspdfPromise) {
+        jspdfPromise = new Promise((resolve, reject) => {
+            const done = () =>
+                ready() ? resolve(ready()) : reject(new Error("jsPDF load failed"))
+            const existing = document.getElementById(
+                "coldscore-jspdf"
+            ) as HTMLScriptElement | null
+            if (existing) {
+                existing.addEventListener("load", done)
+                existing.addEventListener("error", () =>
+                    reject(new Error("jsPDF load failed"))
+                )
+                if (ready()) done()
+                return
+            }
+            const s = document.createElement("script")
+            s.id = "coldscore-jspdf"
+            s.src = JSPDF_CDN
+            s.async = true
+            s.onload = done
+            s.onerror = () => {
+                jspdfPromise = null
+                reject(new Error("Couldn't load the PDF library"))
+            }
+            document.head.appendChild(s)
+        })
+    }
+    return jspdfPromise
+}
+
 async function buildReportDoc(a: Analysis, intake: IntakeData) {
     const M = PDF.M
     const PAGE_W = PDF.PAGE_W
     const PAGE_H = PDF.PAGE_H
     const BRAND_RGB = hexToRgb(BRAND_HEX)
-    const mod: any = await import("jspdf")
-    const jsPDF = mod.jsPDF || mod.default
+    const jsPDF = await loadJsPDF()
     const doc = new jsPDF({ unit: "mm", format: "a4" })
     let y = M
 
